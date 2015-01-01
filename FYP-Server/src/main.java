@@ -1,14 +1,9 @@
 
 
 public class Main {
-	public static void main(String[] args) {
-		
+	public static void main(String[] args) throws Exception {
 		DataGrabber dg = new DataGrabber();
-		try {
-			dg.getHtmlSource("http://www3.consumer.org.hk/pricewatch/supermarket/");
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		dg.getHtmlSource("http://www3.consumer.org.hk/pricewatch/supermarket/");
+		
 	}
 }
