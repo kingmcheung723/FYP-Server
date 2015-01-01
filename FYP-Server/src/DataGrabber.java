@@ -4,22 +4,19 @@ import java.net.URL;
 
 public class DataGrabber {
 
-	private String htmlSource;
-
-	public void getHtmlSource(String url) throws Exception {
+	public String getHtmlSource(String url) throws Exception {
+		String htmlSource = new String();
 		URL oracle = new URL(url);
 		BufferedReader in = new BufferedReader(new InputStreamReader(
 				oracle.openStream()));
 
 		String inputLine;
 		while ((inputLine = in.readLine()) != null) {
-			this.htmlSource += inputLine;
-			System.out.println(inputLine);
+			htmlSource += inputLine;
 		}
 		in.close();
-	}
 
-	public static void main() {
-		DataGrabber dg = new DataGrabber();
+		System.out.println(htmlSource);
+		return htmlSource;
 	}
 }
