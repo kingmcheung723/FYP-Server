@@ -3,6 +3,9 @@
  */
 package src;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author CKM
  * 
@@ -11,22 +14,55 @@ public class Goods {
 	
 	/** Private valiables for the properties of Goods */
 	private String id;
-	private Price price;
 	private DiscountPrice discountPrice;
 	private String category;
 	private String brand;
-	private String name;
+	private String nameZH;
+	private String nameEN;
+	private List<Price> prices = new ArrayList<>();
+	
+	public Goods() {
+		super();
+	}
 
-	public Goods(String id, Price price, DiscountPrice discountPrice, 
-			String category, String brand, String name) {
+	public Goods(String id, DiscountPrice discountPrice, 
+			String category, String brand, String nameZH, String nameEN) {
 		super();
 		
 		this.id = id;
-		this.price = price;
 		this.discountPrice = discountPrice;
 		this.category = category;
 		this.brand = brand;
-		this.name = name;
+		this.nameZH = nameZH;
+		this.nameZH = nameEN;
+	}
+
+	/**
+	 * @return the nameZH
+	 */
+	public String getNameZH() {
+		return nameZH;
+	}
+
+	/**
+	 * @param nameZH the nameZH to set
+	 */
+	public void setNameZH(String nameZH) {
+		this.nameZH = nameZH;
+	}
+
+	/**
+	 * @return the nameEN
+	 */
+	public String getNameEN() {
+		return nameEN;
+	}
+
+	/**
+	 * @param nameEN the nameEN to set
+	 */
+	public void setNameEN(String nameEN) {
+		this.nameEN = nameEN;
 	}
 
 	/**
@@ -58,33 +94,12 @@ public class Goods {
 	}
 
 	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * @param name the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	/**
-	 * @return the price
-	 */
-	public Price getPrice() {
-		return price;
-	}
-
-	/**
 	 * @param price the price to set
 	 */
-	public void setPrice(Price price) {
-		this.price = price;
+	public void addPrice(Price price) {
+		this.prices.add(price);
 	}
-
+	
 	/**
 	 * @return the discountPrice
 	 */
@@ -111,6 +126,22 @@ public class Goods {
 	 */
 	public void setCategory(String category) {
 		this.category = category;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		
+		String priceString = "";
+		for (int i = 0; i < this.prices.size(); i++) {
+			priceString += this.prices.get(i).toString();
+		}
+		
+		return "Goods [id=" + id + ", price=" + priceString + ", discountPrice="
+				+ discountPrice + ", category=" + category + ", brand=" + brand
+				+ ", nameZH=" + nameZH + ", nameEN=" + nameEN + "]";
 	}
 }
 
@@ -149,6 +180,14 @@ class Price {
 	 */
 	public float getPrice() {
 		return price;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Price [shopName=" + shopName + ", price=" + price + "]";
 	}
 
 	/**
