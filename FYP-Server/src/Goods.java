@@ -139,9 +139,10 @@ public class Goods {
 			priceString += this.prices.get(i).toString();
 		}
 		
-		return "Goods [id=" + id + ", price=" + priceString + ", discountPrice="
+		return "Goods [id=" + id + ", nameZH=" + nameZH + ", nameEN=" + nameEN + 
+				", price=" + priceString + ", discountPrice="
 				+ discountPrice + ", category=" + category + ", brand=" + brand
-				+ ", nameZH=" + nameZH + ", nameEN=" + nameEN + "]";
+				+  "]";
 	}
 }
 
@@ -187,7 +188,7 @@ class Price {
 	 */
 	@Override
 	public String toString() {
-		return "Price [shopName=" + shopName + ", price=" + price + "]";
+		return "[shopName=" + shopName + ", price=" + price + "]";
 	}
 
 	/**
