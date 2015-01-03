@@ -21,7 +21,7 @@ public class DataGrabber {
 	
 	private List<Goods> goods = new ArrayList<>();
 	
-	public void extractHtmlElement(String urlStr) throws IOException {
+	public void siteURL(String urlStr) throws IOException {
 		URL url = new URL(urlStr);
 		// Connection timeout in millisecond
 		int timeOut = 30000;
