@@ -26,6 +26,10 @@ public class DataGrabber {
 		// Connection timeout in millisecond
 		int timeOut = 30000;
 		Document htmlSource = Jsoup.parse(url, timeOut);
+		this.extractGoodsData(htmlSource);
+	}
+	
+	private void extractGoodsData(Document htmlSource) {
 		Element table = htmlSource.select("table").get(9); // select the first table.
 		Elements rows = table.select("tr");
 		String record = "";
