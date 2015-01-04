@@ -14,20 +14,28 @@ import org.jsoup.select.Elements;
 
 public class DataGrabber {
 
-	private final static String fileExtension = ".html";
-
-	private final static int goodIdIndex = 0, categoryIndex = 1,
-			brandIndex = 2, nameIndex = 3;
+	/** Index of goods value */
+	private final static int GoodIdIndex = 0;
+	private final static int CategoryIndex = 1;
+	private final static int BrandIndex = 2;
+	private final static int NameIndex = 3;
+	private final static int WellcomeIndex = 4;
+	private final static int PARKnSHOPIndex = 5;
+	private final static int MarketPlaceIndex = 6;
+	private final static int AEONIndex = 7;
+	private final static int DCHFoodMartIndex = 8;
+	
+	/** Index for goods table */
+	private final static int GoodsDataTableIndex = 9;
 
 	public void siteURL(String urlStr) throws IOException {
 		URL url = new URL(urlStr);
 		// Connection timeout in millisecond
 		int timeOut = 30000;
 		Document htmlSource = Jsoup.parse(url, timeOut);
-		Element table = htmlSource.select("table").get(9);
+		Element table = htmlSource.select("table").get(GoodsDataTableIndex);
 		this.extractGoodsData(table);
-		// this.extractElememts(table, categoryIndex);
-
+		this.extractElememts(table, CategoryIndex);
 	}
 
 	private List<Goods> extractGoodsData(Element table) {
@@ -39,24 +47,26 @@ public class DataGrabber {
 			Elements cols = row.select("td");
 
 			Goods good = new Goods();
-			good.setId(cols.get(goodIdIndex).childNode(0).attributes()
+			good.setId(cols.get(GoodIdIndex).childNode(0).attributes()
 					.get("value"));
-			good.setCategory(cols.get(categoryIndex).text());
-			good.setBrand(cols.get(brandIndex).text());
-			good.setNameZH(cols.get(nameIndex).text());
-			good.addPrice(new Price("´f±d", this.priceStringToFloat(cols.get(4)
-					.text())));
-			good.addPrice(new Price("¦Ê¨Î", this.priceStringToFloat(cols.get(5)
-					.text())));
+			good.setCategory(cols.get(CategoryIndex).text());
+			good.setBrand(cols.get(BrandIndex).text());
+			good.setNameZH(cols.get(NameIndex).text());
+			good.addPrice(new Price("´f±d", this.priceStringToFloat(cols.get(
+					WellcomeIndex).text())));
+			good.addPrice(new Price("¦Ê¨Î", this.priceStringToFloat(cols.get(
+					PARKnSHOPIndex).text())));
 			good.addPrice(new Price("Market Place", this
-					.priceStringToFloat(cols.get(6).text())));
-			good.addPrice(new Price("¥Ã©ô", this.priceStringToFloat(cols.get(7)
-					.text())));
-			good.addPrice(new Price("¤j©÷­¹«~", this.priceStringToFloat(cols.get(8)
-					.text())));
+					.priceStringToFloat(cols.get(MarketPlaceIndex).text())));
+			good.addPrice(new Price("¥Ã©ô", this.priceStringToFloat(cols.get(
+					AEONIndex).text())));
+			good.addPrice(new Price("¤j©÷­¹«~", this.priceStringToFloat(cols.get(
+					DCHFoodMartIndex).text())));
 
 			System.out.println(good.toString() + "\n");
 			goods.add(good);
+
+			break;
 		}
 
 		return goods;
@@ -71,7 +81,7 @@ public class DataGrabber {
 			Element row = rows.get(i);
 			Elements cols = row.select("td");
 
-			String categoryName = cols.get(nameIndex).text();
+			String categoryName = cols.get(NameIndex).text();
 			if (elements.contains(categoryName) == false) {
 				System.out.println(categoryName + "\n");
 				elements.add(categoryName);
@@ -90,8 +100,7 @@ public class DataGrabber {
 
 	private void writeToFile(String stringToWrite)
 			throws FileNotFoundException, UnsupportedEncodingException {
-		PrintWriter writer = new PrintWriter("the-file-name" + fileExtension,
-				"UTF-8");
+		PrintWriter writer = new PrintWriter("the-file-name.txt", "UTF-8");
 		writer.println(stringToWrite);
 		writer.close();
 	}
