@@ -72,7 +72,7 @@ public class DataGrabber {
 		return goods;
 	}
 
-	private List<String> extractElememts(Element table, int elementIndex) {
+	private List<String> extractElememts(Element table, final int elementIndex) {
 		Elements rows = table.select("tr");
 
 		List<String> elements = new ArrayList<>();
@@ -81,7 +81,7 @@ public class DataGrabber {
 			Element row = rows.get(i);
 			Elements cols = row.select("td");
 
-			String categoryName = cols.get(NameIndex).text();
+			String categoryName = cols.get(elementIndex).text();
 			if (elements.contains(categoryName) == false) {
 				System.out.println(categoryName + "\n");
 				elements.add(categoryName);
