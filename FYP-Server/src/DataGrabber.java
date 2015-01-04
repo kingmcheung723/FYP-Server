@@ -35,7 +35,13 @@ public class DataGrabber {
 		Document htmlSource = Jsoup.parse(url, timeOut);
 		Element table = htmlSource.select("table").get(GoodsDataTableIndex);
 		this.extractGoodsData(table);
-		this.extractElememts(table, CategoryIndex);
+		
+		// Extract categories
+		List<String> strList = this.extractElememts(table, CategoryIndex);
+		for (int i = 0; i < strList.size(); i++) {
+			String name = strList.get(i);
+			JDBCHelper.getInstance().getJdbcHelper().execute("INSERT INTO categories (name_zh, name_en) VALUES (?, ?)", name, "");
+		}
 	}
 
 	private List<Goods> extractGoodsData(Element table) {
@@ -63,7 +69,7 @@ public class DataGrabber {
 			good.addPrice(new Price("¤j©÷­¹«~", this.priceStringToFloat(cols.get(
 					DCHFoodMartIndex).text())));
 
-			System.out.println(good.toString() + "\n");
+//			System.out.println(good.toString() + "\n");
 			goods.add(good);
 
 			break;
@@ -83,7 +89,7 @@ public class DataGrabber {
 
 			String categoryName = cols.get(elementIndex).text();
 			if (elements.contains(categoryName) == false) {
-				System.out.println(categoryName + "\n");
+//				System.out.println(categoryName + "\n");
 				elements.add(categoryName);
 			}
 		}
