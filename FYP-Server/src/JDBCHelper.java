@@ -25,8 +25,10 @@ public class JDBCHelper {
 	public JDBCHelper() {
 		super();
 
-		DataSource dataSource = new SimpleDataSource("com.mysql.jdbc.Driver",
-				"jdbc:mysql://localhost:3306/fyp_db?useUnicode=yes&characterEncoding=UTF-8", "root", null);
+		DataSource dataSource = new SimpleDataSource(
+				"com.mysql.jdbc.Driver",
+				"jdbc:mysql://localhost:3306/fyp_db?useUnicode=yes&characterEncoding=UTF-8",
+				"root", null);
 		jdbcHelper = new JdbcHelper(dataSource);
 	}
 
@@ -45,7 +47,8 @@ public class JDBCHelper {
 	}
 
 	/**
-	 * @param jdbcHelper the jdbcHelper to set
+	 * @param jdbcHelper
+	 *            the jdbcHelper to set
 	 */
 	public void setJdbcHelper(JdbcHelper jdbcHelper) {
 		this.jdbcHelper = jdbcHelper;
