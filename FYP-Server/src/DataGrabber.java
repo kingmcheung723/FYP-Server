@@ -7,6 +7,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.*;
 
+import javax.sql.DataSource;
+
+import jdbchelper.SimpleDataSource;
+
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -54,21 +58,22 @@ public class DataGrabber {
 		// Extract categories
 		List<String> categoriesListZH = this.extractElememts(tableZH, CategoryIndex);
 		List<String> categoriesListEN = this.extractElememts(tableEN, CategoryIndex);
-		for (int i = 0; i < categoriesListZH.size(); i++) {
+		for (int i = 0; i < categoriesListZH.size() || i < categoriesListEN.size(); i++) {
 			String nameZH = categoriesListZH.get(i);
 			String nameEN = categoriesListEN.get(i);
-			JDBCHelper.getInstance().getJdbcHelper().execute("INSERT INTO " + TableCategories +" (name_zh, name_en) VALUES (?, ?)", nameZH, nameEN);
+			
+//			JDBCHelper.getInstance().getJDBCHelper().execute("INSERT INTO " + TableCategories +" (name_zh, name_en) VALUES (?, ?)", nameZH, nameEN);
 		}
 		
 		// Extract brands
-		List<String> strListZH = this.extractElememts(tableZH, BrandIndex);
-		List<String> strListEN = this.extractElememts(tableEN, BrandIndex);
-		for (int i = 0; i < strListZH.size(); i++) {
-			String nameZH = strListZH.get(i);
-			String nameEN = strListEN.get(i);
-			JDBCHelper.getInstance().getJdbcHelper().execute("INSERT INTO " + TableBrands +" (name_zh, name_en) VALUES (?, ?)", nameZH, nameEN);
+		List<String> brandListZH = this.extractElememts(tableZH, BrandIndex);
+		List<String> brandListEN = this.extractElememts(tableEN, BrandIndex);
+		for (int i = 0; i < brandListZH.size() || i < brandListEN.size(); i++) {
+			String nameZH = brandListZH.get(i);
+//			String nameEN = brandListEN.get(i);
+			
+			JDBCHelper.getInstance().getJDBCHelper().execute("INSERT INTO " + TableBrands +" (name_zh, name_en) VALUES (?, ?)", nameZH, "");
 		}
-		
 	}
 
 	private List<Goods> extractGoodsData(Element table) {
@@ -113,11 +118,8 @@ public class DataGrabber {
 		for (int i = 1; i < rows.size(); i++) {
 			Element row = rows.get(i);
 			Elements cols = row.select("td");
-
-			String categoryName = cols.get(elementIndex).text();
-			if (elements.contains(categoryName) == false) {
-//				System.out.println(categoryName + "\n");
-				elements.add(categoryName);
+			if (elements.contains(cols.get(elementIndex).text())) {
+				elements.add(cols.get(elementIndex).text());
 			}
 		}
 		return elements;
