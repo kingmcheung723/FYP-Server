@@ -24,24 +24,51 @@ public class DataGrabber {
 	private final static int MarketPlaceIndex = 6;
 	private final static int AEONIndex = 7;
 	private final static int DCHFoodMartIndex = 8;
+
+	/** Table names */
+	public final static String TableCategories = "categories";
+	public final static String TableBrands = "brands";
 	
 	/** Index for goods table */
 	private final static int GoodsDataTableIndex = 9;
 
-	public void siteURL(String urlStr) throws IOException {
-		URL url = new URL(urlStr);
+	public void siteURL(String urlStrZH, String urlStrEN) throws IOException {
 		// Connection timeout in millisecond
-		int timeOut = 30000;
-		Document htmlSource = Jsoup.parse(url, timeOut);
-		Element table = htmlSource.select("table").get(GoodsDataTableIndex);
-		this.extractGoodsData(table);
+		final int timeOut = 30000;
+		
+		// Get Chinese version HTML source
+		URL urlZH = new URL(urlStrZH);
+		Document htmlSourceZH = Jsoup.parse(urlZH, timeOut);
+		Element tableZH = htmlSourceZH.select("table").get(GoodsDataTableIndex);
+		
+		// Get English version HTML source
+
+		URL urlEN = new URL(urlStrEN);
+		Document htmlSourceEN = Jsoup.parse(urlEN, timeOut);
+		Element tableEN = htmlSourceEN.select("table").get(GoodsDataTableIndex);
+		
+		// Extract Goods data
+		this.extractGoodsData(tableZH);
+		this.extractGoodsData(tableEN);
 		
 		// Extract categories
-		List<String> strList = this.extractElememts(table, CategoryIndex);
-		for (int i = 0; i < strList.size(); i++) {
-			String name = strList.get(i);
-			JDBCHelper.getInstance().getJdbcHelper().execute("INSERT INTO categories (name_zh, name_en) VALUES (?, ?)", name, "");
+		List<String> categoriesListZH = this.extractElememts(tableZH, CategoryIndex);
+		List<String> categoriesListEN = this.extractElememts(tableEN, CategoryIndex);
+		for (int i = 0; i < categoriesListZH.size(); i++) {
+			String nameZH = categoriesListZH.get(i);
+			String nameEN = categoriesListEN.get(i);
+			JDBCHelper.getInstance().getJdbcHelper().execute("INSERT INTO " + TableCategories +" (name_zh, name_en) VALUES (?, ?)", nameZH, nameEN);
 		}
+		
+		// Extract brands
+		List<String> strListZH = this.extractElememts(tableZH, BrandIndex);
+		List<String> strListEN = this.extractElememts(tableEN, BrandIndex);
+		for (int i = 0; i < strListZH.size(); i++) {
+			String nameZH = strListZH.get(i);
+			String nameEN = strListEN.get(i);
+			JDBCHelper.getInstance().getJdbcHelper().execute("INSERT INTO " + TableBrands +" (name_zh, name_en) VALUES (?, ?)", nameZH, nameEN);
+		}
+		
 	}
 
 	private List<Goods> extractGoodsData(Element table) {
