@@ -70,7 +70,8 @@ public class JDBCHelper extends JdbcHelper {
 	            return ((PreparedStatement) stmt).executeUpdate();
 	         }
 	      } catch (SQLException e) {
-	         throw new JdbcException("Error executing query:\n" + sql + "\n\nError: " + e.getMessage(), e);
+//	         throw new JdbcException("Error executing query:\n" + sql + "\n\nError: " + e.getMessage(), e);
+	    	  return -1;
 	      } finally {
 	         JdbcUtil.close(stmt);
 	         freeConnection(con);
