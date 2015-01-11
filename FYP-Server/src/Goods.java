@@ -13,24 +13,24 @@ import java.util.List;
 public class Goods {
 
 	/** Private valiables for the properties of Goods */
-	private String id;
+	private String barcode;
 	private DiscountPrice discountPrice;
 	private Categories category;
 	private Brands brand;
 	private String nameZH;
 	private String nameEN;
-	private List<Price> prices = new ArrayList<>();
+	private List<ShopPrice> shopPrices = new ArrayList<>();
 
 	public Goods() {
 		super();
 	}
 
-	public Goods(String id, DiscountPrice discountPrice, Categories category,
-			Brands brand, String nameZH, String nameEN) {
+	public Goods(String barcode, DiscountPrice discountPrice,
+			Categories category, Brands brand, String nameZH, String nameEN) {
 
 		super();
 
-		this.id = id;
+		this.barcode = barcode;
 		this.discountPrice = discountPrice;
 		this.category = category;
 		this.brand = brand;
@@ -71,16 +71,16 @@ public class Goods {
 	/**
 	 * @return the id
 	 */
-	public String getId() {
-		return id;
+	public String getBarcode() {
+		return barcode;
 	}
 
 	/**
 	 * @param id
 	 *            the id to set
 	 */
-	public void setId(String id) {
-		this.id = id;
+	public void setBarcode(String barcode) {
+		this.barcode = barcode;
 	}
 
 	/**
@@ -94,11 +94,18 @@ public class Goods {
 	}
 
 	/**
-	 * @param price
+	 * @param shopPrice
 	 *            the price to set
 	 */
-	public void addPrice(Price price) {
-		this.prices.add(price);
+	public void addPrice(ShopPrice shopPrice) {
+		this.shopPrices.add(shopPrice);
+	}
+
+	/**
+	 * @return the shopPrices
+	 */
+	public List<ShopPrice> getShopPrices() {
+		return shopPrices;
 	}
 
 	/**
@@ -135,14 +142,15 @@ public class Goods {
 	public String toString() {
 
 		String priceString = "";
-		for (int i = 0; i < this.prices.size(); i++) {
-			priceString += this.prices.get(i).toString();
+		for (int i = 0; i < this.shopPrices.size(); i++) {
+			priceString += this.shopPrices.get(i).toString();
 		}
 
-		return "Goods [id=" + id + ", nameZH=" + nameZH + ", nameEN=" + nameEN
-				+ ", price=" + priceString + ", discountPrice=" + discountPrice
-				+ ", category=" + category.getNameZh() + ", " + category.getNameEn() + ", brand=" + brand.getNameZh()
-				+ ", " + brand.getNameEn() + "]";
+		return "Goods [id=" + barcode + ", nameZH=" + nameZH + ", nameEN="
+				+ nameEN + ", price=" + priceString + ", discountPrice="
+				+ discountPrice + ", category=" + category.getNameZh() + ", "
+				+ category.getNameEn() + ", brand=" + brand.getNameZh() + ", "
+				+ brand.getNameEn() + "]";
 	}
 }
 
@@ -151,22 +159,22 @@ public class Goods {
  * @author CKM
  * 
  */
-class Price {
+class ShopPrice {
 
-	private String shopName;
+	private String shopId;
 	private float price;
 
-	public Price(String shopName, float price) {
+	public ShopPrice(String shopName, float price) {
 		super();
-		this.shopName = shopName;
+		this.shopId = shopName;
 		this.price = price;
 	}
 
 	/**
 	 * @return the shopName
 	 */
-	public String getShopName() {
-		return shopName;
+	public String getShopId() {
+		return shopId;
 	}
 
 	/**
@@ -174,7 +182,7 @@ class Price {
 	 *            the shopName to set
 	 */
 	public void setShopName(String shopName) {
-		this.shopName = shopName;
+		this.shopId = shopName;
 	}
 
 	/**
@@ -191,7 +199,7 @@ class Price {
 	 */
 	@Override
 	public String toString() {
-		return "[shopName=" + shopName + ", price=" + price + "]";
+		return "[shopId=" + shopId + ", price=" + price + "]";
 	}
 
 	/**
