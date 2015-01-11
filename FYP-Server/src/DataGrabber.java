@@ -9,16 +9,10 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.sql.DataSource;
-import javax.xml.transform.Templates;
-
-import jdbchelper.SimpleDataSource;
-
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.omg.CosNaming.NameHelper;
 
 public class DataGrabber {
 
@@ -40,6 +34,7 @@ public class DataGrabber {
 	public final static String TableCategories = "categories";
 	public final static String TableBrands = "brands";
 	public final static String TableGoods = "goods";
+	public final static String TableShopGoods = "shop_goods";
 
 	/** Shop Id */
 	private final static String WellcomeId = "1";
@@ -48,15 +43,25 @@ public class DataGrabber {
 	private final static String AEONId = "4";
 	private final static String DCHFoodMartId = "5";
 
+	/** Shop Name */
+	private final static String Wellcome = "Wellcome";
+	private final static String PARKnSHOP = "PARKnSHOP";
+	private final static String MarketPlace = "MarketPlace";
+	private final static String AEON = "AEON";
+	private final static String DCHFoodMart = "DCHFoodMart";
+
 	/** Booleans for indicate isn't extract the follow items */
-	private static boolean isExtractBrands = false;
-	private static boolean isExtractCategories = false;
-	private static boolean isExtractGoods = true;
+	private static boolean isInsertBrands = false;
+	private static boolean isInsertCategories = false;
+	private static boolean isInsertGoods = false;
 
 	/** Regex for extract data */
 	private final static Pattern regex = Pattern.compile("[a-zA-Z0-9'-]");
 
 	private final static String TokenizerSpitter = " ";
+
+	/** Goods store in memory for calling multiple call */
+	List<Goods> goods;
 
 	public void siteURL(String urlStrZH, String urlStrEN) throws IOException {
 		// Connection timeout in millisecond
@@ -72,14 +77,20 @@ public class DataGrabber {
 		Document htmlSourceEN = Jsoup.parse(urlEN, timeOut);
 		Element tableEN = htmlSourceEN.select("table").get(GoodsDataTableIndex);
 
-		// Extract Goods data
-		this.insertGoodsData(tableZH, tableEN, isExtractGoods);
+		// Extract goods data
+		this.extractGoods(tableZH, tableEN);
 
-		// Extract brands
-		this.insertBrands(tableZH, tableEN, isExtractBrands);
+		// Insert into shop_goods
+		this.insertShopGoods(this.extractGoods(tableZH, tableEN));
 
-		// Extract categories
-		this.insertCategries(tableZH, tableEN, isExtractCategories);
+		// Insert Goods data
+		this.insertGoodsData(tableZH, tableEN, isInsertGoods);
+
+		// Insert brands data
+		this.insertBrands(tableZH, tableEN, isInsertBrands);
+
+		// Insert categories data
+		this.insertCategries(tableZH, tableEN, isInsertCategories);
 
 	}
 
@@ -141,71 +152,7 @@ public class DataGrabber {
 	private void insertGoodsData(Element tableZH, Element tableEN,
 			boolean isEnable) {
 		if (isEnable == true) {
-			// Extract Chinese goods
-			List<Goods> goods = new ArrayList<>();
-			Elements rows = tableZH.select("tr");
-			for (int i = 1; i < rows.size(); i++) {
-				Element row = rows.get(i);
-				Elements cols = row.select("td");
-
-				Goods good = new Goods();
-				good.setId(cols.get(GoodIdIndex).childNode(0).attributes()
-						.get("value"));
-				good.getCategory().setNameZh(cols.get(CategoryIndex).text());
-
-				// Extract brand name in Chinese and English
-				StringTokenizer nameToken = new StringTokenizer(cols.get(
-						BrandIndex).text(), TokenizerSpitter);
-				String nameZH = "";
-				String nameEN = "";
-				while (nameToken.hasMoreTokens()) {
-					String tokenString = nameToken.nextToken();
-					if (this.isChinese(tokenString)) {
-						nameZH += nameZH == "" ? tokenString : TokenizerSpitter
-								+ tokenString;
-					} else {
-						nameEN += nameEN == "" ? tokenString : TokenizerSpitter
-								+ tokenString;
-					}
-				}
-				good.getBrand().setNameZh(nameZH);
-				good.getBrand().setNameEn(nameEN);
-
-				good.setNameZH(cols.get(NameIndex).text());
-				good.addPrice(new Price("´f±d", this.priceStringToFloat(cols.get(
-						WellcomeIndex).text())));
-				good.addPrice(new Price("¦Ê¨Î", this.priceStringToFloat(cols.get(
-						PARKnSHOPIndex).text())));
-				good.addPrice(new Price("Market Place", this
-						.priceStringToFloat(cols.get(MarketPlaceIndex).text())));
-				good.addPrice(new Price("¥Ã©ô", this.priceStringToFloat(cols.get(
-						AEONIndex).text())));
-				good.addPrice(new Price("¤j©÷­¹«~", this.priceStringToFloat(cols
-						.get(DCHFoodMartIndex).text())));
-
-				goods.add(good);
-			}
-
-			// Extract English data
-			rows = tableEN.select("tr");
-			for (int i = 1; i < rows.size(); i++) {
-				Element row = rows.get(i);
-				Elements cols = row.select("td");
-				// Get good id
-				String goodIdString = cols.get(GoodIdIndex).childNode(0)
-						.attributes().get("value");
-
-				if (goods.size() >= i) {
-					String goodsIdString = goods.get(i - 1).getId();
-					if (goodIdString.equalsIgnoreCase(goodsIdString)) {
-						// Set English name into goods
-						goods.get(i - 1).setNameEN(cols.get(NameIndex).text());
-						// Set English name of category into goods
-						goods.get(i - 1).getCategory()
-								.setNameEn(cols.get(CategoryIndex).text());
-					}
-				}
-			}
+			List<Goods> goods = this.extractGoods(tableZH, tableEN);
 
 			for (int i = 0; i < goods.size(); i++) {
 				Goods good = goods.get(i);
@@ -242,13 +189,113 @@ public class DataGrabber {
 								"INSERT INTO "
 										+ TableGoods
 										+ " (barcode, name_zh, name_en, brand_id, category_id) VALUES (?, ?, ?, ?, ?)",
-								good.getId(), good.getNameZH(),
+								good.getBarcode(), good.getNameZH(),
 								good.getNameEN(), brandId, categoryId);
-
-				System.out.println("Result: " + result + " |" + i + " : "
-						+ "brand:" + brandId + "category:" + categoryId);
 			}
 		}
+	}
+
+	private void insertShopGoods(List<Goods> goods) {
+		for (int i = 0; i < goods.size(); i++) {
+			Goods good = goods.get(i);
+			int goodId = JDBCHelper
+					.getInstance()
+					.getJDBCHelper()
+					.queryForInt(
+							"SELECT good_id FROM goods WHERE goods.barcode = ?",
+							good.getBarcode());
+
+			List<ShopPrice> shopPrice = good.getShopPrices();
+			for (int j = 0; j < shopPrice.size(); j++) {
+				String shopId = shopPrice.get(j).getShopId();
+				float price = shopPrice.get(j).getPrice();
+
+				if (goodId > 0) {
+//					JDBCHelper
+//							.getInstance()
+//							.getJDBCHelper()
+//							.execute(
+//									"INSERT INTO "
+//											+ TableShopGoods
+//											+ " (shop_id, good_id, price) VALUES (?, ?, ?)",
+//									shopId, goodId, price >= 0 ? shopPrice.get(i).getPrice() : null);
+				}
+				System.out.println(i + " | " + this.shopNameFromShopId(shopId) + " " + String.valueOf(price));
+			}
+		}
+	}
+
+	private List<Goods> extractGoods(Element tableZH, Element tableEN) {
+		// Extract Chinese goods
+		if (this.goods == null) {
+			this.goods = new ArrayList<>();
+		}
+
+		Elements rows = tableZH.select("tr");
+		for (int i = 1; i < rows.size(); i++) {
+			Element row = rows.get(i);
+			Elements cols = row.select("td");
+
+			Goods good = new Goods();
+			good.setBarcode(cols.get(GoodIdIndex).childNode(0).attributes()
+					.get("value"));
+			good.getCategory().setNameZh(cols.get(CategoryIndex).text());
+
+			// Extract brand name in Chinese and English
+			StringTokenizer nameToken = new StringTokenizer(cols
+					.get(BrandIndex).text(), TokenizerSpitter);
+			String nameZH = "";
+			String nameEN = "";
+			while (nameToken.hasMoreTokens()) {
+				String tokenString = nameToken.nextToken();
+				if (this.isChinese(tokenString)) {
+					nameZH += nameZH == "" ? tokenString : TokenizerSpitter
+							+ tokenString;
+				} else {
+					nameEN += nameEN == "" ? tokenString : TokenizerSpitter
+							+ tokenString;
+				}
+			}
+			good.getBrand().setNameZh(nameZH);
+			good.getBrand().setNameEn(nameEN);
+
+			good.setNameZH(cols.get(NameIndex).text());
+			good.addPrice(new ShopPrice(WellcomeId, this
+					.priceStringToFloat(cols.get(WellcomeIndex).text())));
+			good.addPrice(new ShopPrice(PARKnSHOPId, this
+					.priceStringToFloat(cols.get(PARKnSHOPIndex).text())));
+			good.addPrice(new ShopPrice(MarketPlaceId, this
+					.priceStringToFloat(cols.get(MarketPlaceIndex).text())));
+			good.addPrice(new ShopPrice(AEONId, this.priceStringToFloat(cols
+					.get(AEONIndex).text())));
+			good.addPrice(new ShopPrice(DCHFoodMartId, this
+					.priceStringToFloat(cols.get(DCHFoodMartIndex).text())));
+
+			this.goods.add(good);
+		}
+
+		// Extract English data
+		rows = tableEN.select("tr");
+		for (int i = 1; i < rows.size(); i++) {
+			Element row = rows.get(i);
+			Elements cols = row.select("td");
+			// Get good id
+			String goodIdString = cols.get(GoodIdIndex).childNode(0)
+					.attributes().get("value");
+
+			if (goods.size() >= i) {
+				String goodsIdString = goods.get(i - 1).getBarcode();
+				if (goodIdString.equalsIgnoreCase(goodsIdString)) {
+					// Set English name into goods
+					goods.get(i - 1).setNameEN(cols.get(NameIndex).text());
+					// Set English name of category into goods
+					goods.get(i - 1).getCategory()
+							.setNameEn(cols.get(CategoryIndex).text());
+				}
+			}
+		}
+
+		return this.goods;
 	}
 
 	private boolean isChinese(String str) {
@@ -261,6 +308,24 @@ public class DataGrabber {
 			}
 		}
 		return isChinese;
+	}
+
+	private String shopNameFromShopId(String shopId) {
+		String shopName = null;
+
+		if (shopId == WellcomeId) {
+			shopName = Wellcome;
+		} else if (shopId == PARKnSHOPId) {
+			shopName = PARKnSHOP;
+		} else if (shopId == MarketPlaceId) {
+			shopName = MarketPlace;
+		} else if (shopId == AEONId) {
+			shopName = AEON;
+		} else if (shopId == DCHFoodMartId) {
+			shopName = DCHFoodMart;
+		}
+
+		return shopName;
 	}
 
 	private List<String> extractElememts(Element table, final int elementIndex) {
