@@ -11,24 +11,25 @@ import java.util.List;
  * 
  */
 public class Goods {
-	
+
 	/** Private valiables for the properties of Goods */
 	private String id;
 	private DiscountPrice discountPrice;
-	private String category;
-	private String brand;
+	private Categories category;
+	private Brands brand;
 	private String nameZH;
 	private String nameEN;
 	private List<Price> prices = new ArrayList<>();
-	
+
 	public Goods() {
 		super();
 	}
 
-	public Goods(String id, DiscountPrice discountPrice, 
-			String category, String brand, String nameZH, String nameEN) {
+	public Goods(String id, DiscountPrice discountPrice, Categories category,
+			Brands brand, String nameZH, String nameEN) {
+
 		super();
-		
+
 		this.id = id;
 		this.discountPrice = discountPrice;
 		this.category = category;
@@ -45,7 +46,8 @@ public class Goods {
 	}
 
 	/**
-	 * @param nameZH the nameZH to set
+	 * @param nameZH
+	 *            the nameZH to set
 	 */
 	public void setNameZH(String nameZH) {
 		this.nameZH = nameZH;
@@ -59,7 +61,8 @@ public class Goods {
 	}
 
 	/**
-	 * @param nameEN the nameEN to set
+	 * @param nameEN
+	 *            the nameEN to set
 	 */
 	public void setNameEN(String nameEN) {
 		this.nameEN = nameEN;
@@ -73,7 +76,8 @@ public class Goods {
 	}
 
 	/**
-	 * @param id the id to set
+	 * @param id
+	 *            the id to set
 	 */
 	public void setId(String id) {
 		this.id = id;
@@ -82,24 +86,21 @@ public class Goods {
 	/**
 	 * @return the brand
 	 */
-	public String getBrand() {
+	public Brands getBrand() {
+		if (this.brand == null) {
+			this.brand = new Brands();
+		}
 		return brand;
 	}
 
 	/**
-	 * @param brand the brand to set
-	 */
-	public void setBrand(String brand) {
-		this.brand = brand;
-	}
-
-	/**
-	 * @param price the price to set
+	 * @param price
+	 *            the price to set
 	 */
 	public void addPrice(Price price) {
 		this.prices.add(price);
 	}
-	
+
 	/**
 	 * @return the discountPrice
 	 */
@@ -108,7 +109,8 @@ public class Goods {
 	}
 
 	/**
-	 * @param discountPrice the discountPrice to set
+	 * @param discountPrice
+	 *            the discountPrice to set
 	 */
 	public void setDiscountPrice(DiscountPrice discountPrice) {
 		this.discountPrice = discountPrice;
@@ -117,32 +119,30 @@ public class Goods {
 	/**
 	 * @return the category
 	 */
-	public String getCategory() {
+	public Categories getCategory() {
+		if (this.category == null) {
+			this.category = new Categories("", "");
+		}
 		return category;
 	}
 
-	/**
-	 * @param category the category to set
-	 */
-	public void setCategory(String category) {
-		this.category = category;
-	}
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		
+
 		String priceString = "";
 		for (int i = 0; i < this.prices.size(); i++) {
 			priceString += this.prices.get(i).toString();
 		}
-		
-		return "Goods [id=" + id + ", nameZH=" + nameZH + ", nameEN=" + nameEN + 
-				", price=" + priceString + ", discountPrice="
-				+ discountPrice + ", category=" + category + ", brand=" + brand
-				+  "]";
+
+		return "Goods [id=" + id + ", nameZH=" + nameZH + ", nameEN=" + nameEN
+				+ ", price=" + priceString + ", discountPrice=" + discountPrice
+				+ ", category=" + category.getNameZh() + ", " + category.getNameEn() + ", brand=" + brand.getNameZh()
+				+ ", " + brand.getNameEn() + "]";
 	}
 }
 
@@ -152,10 +152,10 @@ public class Goods {
  * 
  */
 class Price {
-	
+
 	private String shopName;
 	private float price;
-	
+
 	public Price(String shopName, float price) {
 		super();
 		this.shopName = shopName;
@@ -170,7 +170,8 @@ class Price {
 	}
 
 	/**
-	 * @param shopName the shopName to set
+	 * @param shopName
+	 *            the shopName to set
 	 */
 	public void setShopName(String shopName) {
 		this.shopName = shopName;
@@ -183,7 +184,9 @@ class Price {
 		return price;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -192,7 +195,8 @@ class Price {
 	}
 
 	/**
-	 * @param price the price to set
+	 * @param price
+	 *            the price to set
 	 */
 	public void setPrice(float price) {
 		this.price = price;
@@ -200,10 +204,11 @@ class Price {
 }
 
 class DiscountPrice {
-	
+
 	private String shopName;
 	private float discountPrice;
 	private String details;
+
 	/**
 	 * @param shopName
 	 * @param discountPrice
@@ -215,42 +220,155 @@ class DiscountPrice {
 		this.discountPrice = discountPrice;
 		this.details = details;
 	}
+
 	/**
 	 * @return the shopName
 	 */
 	public String getShopName() {
 		return shopName;
 	}
+
 	/**
-	 * @param shopName the shopName to set
+	 * @param shopName
+	 *            the shopName to set
 	 */
 	public void setShopName(String shopName) {
 		this.shopName = shopName;
 	}
+
 	/**
 	 * @return the discountPrice
 	 */
 	public float getDiscountPrice() {
 		return discountPrice;
 	}
+
 	/**
-	 * @param discountPrice the discountPrice to set
+	 * @param discountPrice
+	 *            the discountPrice to set
 	 */
 	public void setDiscountPrice(float discountPrice) {
 		this.discountPrice = discountPrice;
 	}
+
 	/**
 	 * @return the details
 	 */
 	public String getDetails() {
 		return details;
 	}
+
 	/**
-	 * @param details the details to set
+	 * @param details
+	 *            the details to set
 	 */
 	public void setDetails(String details) {
 		this.details = details;
 	}
-	
-	
+
+}
+
+class Brands {
+
+	private String nameZh;
+	private String nameEn;
+
+	/**
+	 * @param nameZh
+	 * @param nameEn
+	 */
+	public Brands(String nameZh, String nameEn) {
+		super();
+		this.nameZh = nameZh;
+		this.nameEn = nameEn;
+	}
+
+	/**
+	 * 
+	 */
+	public Brands() {
+		super();
+	}
+
+	/**
+	 * @return the nameZh
+	 */
+	public String getNameZh() {
+		return nameZh;
+	}
+
+	/**
+	 * @param nameZh
+	 *            the nameZh to set
+	 */
+	public void setNameZh(String nameZh) {
+		this.nameZh = nameZh;
+	}
+
+	/**
+	 * @return the nameEn
+	 */
+	public String getNameEn() {
+		return nameEn;
+	}
+
+	/**
+	 * @param nameEn
+	 *            the nameEn to set
+	 */
+	public void setNameEn(String nameEn) {
+		this.nameEn = nameEn;
+	}
+
+}
+
+class Categories {
+
+	private String nameZh;
+	private String nameEn;
+
+	public Categories() {
+		super();
+	}
+
+	/**
+	 * @param nameZh
+	 * @param nameEn
+	 */
+	public Categories(String nameZh, String nameEn) {
+		super();
+		this.nameZh = nameZh;
+		this.nameEn = nameEn;
+	}
+
+	/**
+	 * @return the nameZh
+	 */
+	public String getNameZh() {
+		return nameZh;
+	}
+
+	/**
+	 * @param nameZh
+	 *            the nameZh to set
+	 */
+	public void setNameZh(String nameZh) {
+		this.nameZh = nameZh;
+	}
+
+	/**
+	 * @return the nameEn
+	 */
+	public String getNameEn() {
+		return nameEn;
+	}
+
+	/**
+	 * @param nameEn
+	 *            the nameEn to set
+	 */
+	public void setNameEn(String nameEn) {
+		this.nameEn = nameEn;
+	}
+
 }
