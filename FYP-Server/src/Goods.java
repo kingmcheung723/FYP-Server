@@ -12,13 +12,16 @@ import java.util.List;
  */
 public class Goods {
 
-	/** Private valiables for the properties of Goods */
+	/** Private variables for the properties of Goods */
 	private String id;
 	private DiscountPrice discountPrice;
 	private Categories category;
+	private Price price;
 	private Brands brand;
 	private String nameZH;
 	private String nameEN;
+	private String barcode;
+	private String consumerId;
 	private List<Price> prices = new ArrayList<>();
 
 	public Goods() {
@@ -115,6 +118,21 @@ public class Goods {
 	public void setDiscountPrice(DiscountPrice discountPrice) {
 		this.discountPrice = discountPrice;
 	}
+	
+	/**
+	 * @return the barcode
+	 */
+	public String getBarcode() {
+		return barcode;
+	}
+
+	/**
+	 * @param barcode the barcode to set
+	 */
+	public void setBarcode(String barcode) {
+		this.barcode = barcode;
+	}
+
 
 	/**
 	 * @return the category
@@ -124,6 +142,20 @@ public class Goods {
 			this.category = new Categories("", "");
 		}
 		return category;
+	}
+
+	/**
+	 * @return the consumerId
+	 */
+	public String getConsumerId() {
+		return consumerId;
+	}
+
+	/**
+	 * @param consumerId the consumerId to set
+	 */
+	public void setConsumerId(String consumerId) {
+		this.consumerId = consumerId;
 	}
 
 	/*
