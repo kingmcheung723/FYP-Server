@@ -4,8 +4,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,11 +48,16 @@ public class DataGrabber {
 	public final static String TablePrices = "prices";
 
 	/** Shop Id */
-	private final static String WellcomeId = "1";
-	private final static String PARKnSHOPId = "2";
-	private final static String MarketPlaceId = "3";
-	private final static String AEONId = "4";
-	private final static String DCHFoodMartId = "5";
+	private final static String WellcomeIdString = "1";
+	private final static String PARKnSHOPIdString = "2";
+	private final static String MarketPlaceIdString = "3";
+	private final static String AEONIdString = "4";
+	private final static String DCHFoodMartIdString = "5";
+	private final static int WellcomeId = 1;
+	private final static int PARKnSHOPId = 2;
+	private final static int MarketPlaceId = 3;
+	private final static int AEONId = 4;
+	private final static int DCHFoodMartId = 5;
 
 	/** Shop Name */
 	private final static String Wellcome = "Wellcome";
@@ -224,9 +230,14 @@ public class DataGrabber {
 			// Get good's consumer id
 			List<String> consumerIds = JDBCHelper.getInstance().getJDBCHelper()
 					.queryForStringList("SELECT goods.consumer_id FROM goods");
+			
+			Date todayDate = new Date();
 
 			if (consumerIds != null && consumerIds.size() > 0) {
 				for (int i = 0; i < consumerIds.size(); i++) {
+					if (i == 1)
+						System.exit(0);
+					
 					String consumerId = consumerIds.get(i);
 
 					final int timeOut = 3000;
@@ -259,7 +270,22 @@ public class DataGrabber {
 						for (int k = 1; k < shopTableTrs.size(); k++) {
 							Elements shopTableTds = shopTableTrs.get(k).select(
 									"td");
-							String priceDate = shopTableTds.get(0).text();
+							String priceDateString = shopTableTds.get(0).text();
+
+							// Only get the current date price
+							try {
+								SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+								Date priceDate = dateFormat.parse(priceDateString);
+
+								// If the price date is before today, do not process the price 
+								int result = priceDate.compareTo(todayDate);
+								if (result >= 0) {
+									continue;
+								}
+							} catch (Exception e) {
+								continue;
+							}
+							
 							String price = shopTableTds.get(1).text();
 							if (price.equalsIgnoreCase("--")) {
 								continue;
@@ -301,23 +327,37 @@ public class DataGrabber {
 											"SELECT good_id FROM goods WHERE goods.consumer_id = ?",
 											consumerId);
 
-							// Inert into goods JDBCHelper .getInstance()
-							JDBCHelper
-									.getInstance()
-									.getJDBCHelper()
-									.execute(
-											"INSERT INTO "
-													+ TablePrices
-													+ " (price, discount_details_zh, discount_details_en, good_id, shop_id) VALUES (?, ?, ?, ?, ?)",
-											price, discountDetailsZH,
-											discountDetailsEN, goodId, shopId);
+							String shopName = shopNameFromShopId(shopId);
+							if (shopName != null) {
 
-							System.out.println(Integer.toString(shopId) + "\n"
-									+ priceDate + "\n" + price + "\n"
-									+ discountDetailsZH + "\n"
-									+ discountDetailsEN);
+								// Inert into goods JDBCHelper .getInstance()
+								int result = JDBCHelper
+										.getInstance()
+										.getJDBCHelper()
+										.execute(
+												"INSERT INTO "
+														+ TableShopGoods
+														+ " (shop_id, good_id, price, discount_details_zh, discount_details_en) VALUES (?, ?, ?, ?, ?)",
+												shopId, goodId, price,
+												discountDetailsZH,
+												discountDetailsEN);
+								
+								String goodName = JDBCHelper
+										.getInstance()
+										.getJDBCHelper()
+										.queryForString(
+												"SELECT name_zh FROM goods WHERE goods.good_id = ?",
+												goodId);
 
-							System.exit(0);
+								System.out.println(result + "\n"
+										+ Integer.toString(shopId) + " : "
+										+ shopName + "\n" + goodId + " : "
+										+ goodName + "\n" + priceDateString
+										+ "\n" + price + "\n"
+										+ discountDetailsZH + "\n"
+										+ discountDetailsEN);
+
+							}
 						}
 					}
 				}
@@ -428,16 +468,40 @@ public class DataGrabber {
 	private String shopNameFromShopId(String shopId) {
 		String shopName = null;
 
-		if (shopId == WellcomeId) {
+		if (shopId == WellcomeIdString) {
 			shopName = Wellcome;
-		} else if (shopId == PARKnSHOPId) {
+		} else if (shopId == PARKnSHOPIdString) {
 			shopName = PARKnSHOP;
-		} else if (shopId == MarketPlaceId) {
+		} else if (shopId == MarketPlaceIdString) {
 			shopName = MarketPlace;
-		} else if (shopId == AEONId) {
+		} else if (shopId == AEONIdString) {
 			shopName = AEON;
-		} else if (shopId == DCHFoodMartId) {
+		} else if (shopId == DCHFoodMartIdString) {
 			shopName = DCHFoodMart;
+		}
+
+		return shopName;
+	}
+
+	private String shopNameFromShopId(int shopId) {
+		String shopName = null;
+		
+		switch (shopId) {
+		case WellcomeId:
+			shopName = Wellcome;
+			break;
+		case PARKnSHOPId:
+			shopName = PARKnSHOP;
+			break;
+		case MarketPlaceId:
+			shopName = MarketPlace;
+			break;
+		case AEONId:
+			shopName = AEON;
+			break;
+		case DCHFoodMartId:
+			shopName = DCHFoodMart;
+			break;
 		}
 
 		return shopName;
