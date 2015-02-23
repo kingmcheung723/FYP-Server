@@ -230,14 +230,14 @@ public class DataGrabber {
 			// Get good's consumer id
 			List<String> consumerIds = JDBCHelper.getInstance().getJDBCHelper()
 					.queryForStringList("SELECT goods.consumer_id FROM goods");
-			
-			Date todayDate = new Date();
+
+
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.DATE, -1);
+			Date yesterday = cal.getTime();
 
 			if (consumerIds != null && consumerIds.size() > 0) {
 				for (int i = 0; i < consumerIds.size(); i++) {
-					if (i == 1)
-						System.exit(0);
-					
 					String consumerId = consumerIds.get(i);
 
 					final int timeOut = 3000;
@@ -247,6 +247,9 @@ public class DataGrabber {
 							+ consumerId);
 					Document htmlSourceZH = Jsoup.parse(urlZH, timeOut);
 					Elements tables = htmlSourceZH.select("table");
+					if (tables.size() == 0 || tables.size() < PriceDataTableIndex) {
+						continue;
+					}
 					Element tableZH = tables.get(PriceDataTableIndex);
 
 					// Get English version HTML source
@@ -255,6 +258,11 @@ public class DataGrabber {
 					Document htmlSourceEN = Jsoup.parse(urlEN, timeOut);
 					Element tableEN = htmlSourceEN.select("table").get(
 							PriceDataTableIndex);
+					System.out.println("i = " + i);
+					extractDiscountDetails(tableZH, consumerId, false);
+					
+					if (true)
+						continue;
 
 					Elements trs = tableZH.select("tr");
 					// Index 1 is the first table of shops
@@ -278,8 +286,8 @@ public class DataGrabber {
 								Date priceDate = dateFormat.parse(priceDateString);
 
 								// If the price date is before today, do not process the price 
-								int result = priceDate.compareTo(todayDate);
-								if (result >= 0) {
+								int result = priceDate.compareTo(yesterday);
+								if (result <= 0) {
 									continue;
 								}
 							} catch (Exception e) {
@@ -290,25 +298,9 @@ public class DataGrabber {
 							if (price.equalsIgnoreCase("--")) {
 								continue;
 							} else {
-
-								// Extract only the digits from the price string
-								String priceOnlyDigit = "";
-								for (int z = 0; z < price.length(); z++) {
-
-									// Check isn't a chinese
-							        int codepoint = price.codePointAt(z);
-							        i += Character.charCount(codepoint);
-							        if (Character.UnicodeScript.of(codepoint) == Character.UnicodeScript.HAN) {
-							            break;
-							        }
-									
-									char c = price.charAt(z);
-									if ((c >= 48 && c <= 57) || (c == '.')) {
-										priceOnlyDigit += c;
-									}
-								}
-								price = priceOnlyDigit;
+								price = priceOnlyDigit(price);
 							}
+							
 							String discountDetailsZH = "";
 							String discountDetailsEN = "";
 							if (!shopTableTds.select("remark").isEmpty()) {
@@ -359,6 +351,121 @@ public class DataGrabber {
 
 							}
 						}
+					}
+				}
+			}
+		}
+	}
+	
+	private String priceOnlyDigit(String price) {
+		// Extract only the digits from the price string
+		String priceOnlyDigit = "";
+		for (int z = 0; z < price.length(); z++) {
+
+			// Check isn't a chinese
+	        int codepoint = price.codePointAt(z);
+	        if (Character.UnicodeScript.of(codepoint) == Character.UnicodeScript.HAN) {
+	            break;
+	        }
+			
+			char c = price.charAt(z);
+			if ((c >= 48 && c <= 57) || (c == '.')) {
+				priceOnlyDigit += c;
+			}
+		}
+		return priceOnlyDigit;
+	}
+	
+	private void extractDiscountDetails(Element table, String consumerId, Boolean isEn) {
+
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.DATE, -1);
+		Date yesterday = cal.getTime();
+
+		Elements trs = table.select("tr");
+		// Index 1 is the first table of shops
+		Elements shopTables = trs.get(PriceDataShopTablesIndex).select("table");
+
+		int shopId = 0;
+		// Extract shop tables
+		for (int j = 0; j < shopTables.size(); j++) {
+			Elements shopTableTrs = shopTables.get(j).select("tr");
+			shopId = j + 1;
+			// Extract "tr"s(Price) for shop table
+			for (int k = 1; k < shopTableTrs.size(); k++) {
+				Elements shopTableTds = shopTableTrs.get(k).select("td");
+				String priceDateString = shopTableTds.get(0).text();
+
+				// Only get the current date price
+				try {
+					SimpleDateFormat dateFormat = new SimpleDateFormat(
+							"yyyy-MM-dd");
+					Date priceDate = dateFormat.parse(priceDateString);
+
+					// If the price date is before today, do not process the
+					// price
+					int result = priceDate.compareTo(yesterday);
+					if (result <= 0) {
+						continue;
+					}
+				} catch (Exception e) {
+					continue;
+				}
+				
+				String price = shopTableTds.get(1).text();
+				if (price.equalsIgnoreCase("--")) {
+					continue;
+				} else {
+					price = priceOnlyDigit(price);
+				}
+
+				if (!shopTableTds.select("remark").isEmpty()) {
+					String discountDetails = "";
+					Elements remarks = shopTableTds.select("remark");
+					discountDetails = remarks.first().text();
+
+					int goodId = JDBCHelper
+							.getInstance()
+							.getJDBCHelper()
+							.queryForInt(
+									"SELECT good_id FROM goods WHERE goods.consumer_id = ?",
+									consumerId);
+					
+					String goodName = JDBCHelper
+							.getInstance()
+							.getJDBCHelper()
+							.queryForString(
+									"SELECT name_zh FROM goods WHERE goods.good_id = ?",
+									goodId);
+
+					String shopName = shopNameFromShopId(shopId);
+					
+					System.out.println("Consumer Id: " + consumerId + "\n"
+							+ "Shop Id: " + shopId + "\n" +
+							"Shop: " + shopName + "\n" + 
+							"Good: " + goodName + "\n" +
+							"Price: " + price
+							+ "\n" + "Discount: " + discountDetails);
+					
+					if (shopName == null) {
+						
+						String sql = null;
+						if (isEn) {
+							sql = "INSERT INTO " + TableShopGoods + "(shop_id, good_id, price, discount_details_en) VALUES (?, ?, ?, ?)";
+						} else {
+							sql = "INSERT INTO " + TableShopGoods + "(shop_id, good_id, price, discount_details_zh) VALUES (?, ?, ?, ?)";
+						}
+						
+						
+						// Inert into goods JDBCHelper .getInstance()
+//						int result = JDBCHelper
+//								.getInstance()
+//								.getJDBCHelper()
+//								.execute(
+//										"INSERT INTO "
+//												+ TableShopGoods
+//												+ " (shop_id, good_id, price, discount_details_zh, discount_details_en) VALUES (?, ?, ?, ?, ?)",
+//										shopId, goodId, price, discountDetails);
 					}
 				}
 			}
