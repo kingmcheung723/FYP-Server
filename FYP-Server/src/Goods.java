@@ -12,25 +12,28 @@ import java.util.List;
  */
 public class Goods {
 
-	/** Private valiables for the properties of Goods */
-	private String barcode;
+	/** Private variables for the properties of Goods */
+	private String id;
 	private DiscountPrice discountPrice;
 	private Categories category;
+	private Price price;
 	private Brands brand;
 	private String nameZH;
 	private String nameEN;
-	private List<ShopPrice> shopPrices = new ArrayList<>();
+	private String barcode;
+	private String consumerId;
+	private List<Price> prices = new ArrayList<>();
 
 	public Goods() {
 		super();
 	}
 
-	public Goods(String barcode, DiscountPrice discountPrice,
-			Categories category, Brands brand, String nameZH, String nameEN) {
+	public Goods(String id, DiscountPrice discountPrice, Categories category,
+			Brands brand, String nameZH, String nameEN) {
 
 		super();
 
-		this.barcode = barcode;
+		this.id = id;
 		this.discountPrice = discountPrice;
 		this.category = category;
 		this.brand = brand;
@@ -71,16 +74,16 @@ public class Goods {
 	/**
 	 * @return the id
 	 */
-	public String getBarcode() {
-		return barcode;
+	public String getId() {
+		return id;
 	}
 
 	/**
 	 * @param id
 	 *            the id to set
 	 */
-	public void setBarcode(String barcode) {
-		this.barcode = barcode;
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	/**
@@ -94,18 +97,11 @@ public class Goods {
 	}
 
 	/**
-	 * @param shopPrice
+	 * @param price
 	 *            the price to set
 	 */
-	public void addPrice(ShopPrice shopPrice) {
-		this.shopPrices.add(shopPrice);
-	}
-
-	/**
-	 * @return the shopPrices
-	 */
-	public List<ShopPrice> getShopPrices() {
-		return shopPrices;
+	public void addPrice(Price price) {
+		this.prices.add(price);
 	}
 
 	/**
@@ -122,6 +118,21 @@ public class Goods {
 	public void setDiscountPrice(DiscountPrice discountPrice) {
 		this.discountPrice = discountPrice;
 	}
+	
+	/**
+	 * @return the barcode
+	 */
+	public String getBarcode() {
+		return barcode;
+	}
+
+	/**
+	 * @param barcode the barcode to set
+	 */
+	public void setBarcode(String barcode) {
+		this.barcode = barcode;
+	}
+
 
 	/**
 	 * @return the category
@@ -133,6 +144,20 @@ public class Goods {
 		return category;
 	}
 
+	/**
+	 * @return the consumerId
+	 */
+	public String getConsumerId() {
+		return consumerId;
+	}
+
+	/**
+	 * @param consumerId the consumerId to set
+	 */
+	public void setConsumerId(String consumerId) {
+		this.consumerId = consumerId;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -142,15 +167,14 @@ public class Goods {
 	public String toString() {
 
 		String priceString = "";
-		for (int i = 0; i < this.shopPrices.size(); i++) {
-			priceString += this.shopPrices.get(i).toString();
+		for (int i = 0; i < this.prices.size(); i++) {
+			priceString += this.prices.get(i).toString();
 		}
 
-		return "Goods [id=" + barcode + ", nameZH=" + nameZH + ", nameEN="
-				+ nameEN + ", price=" + priceString + ", discountPrice="
-				+ discountPrice + ", category=" + category.getNameZh() + ", "
-				+ category.getNameEn() + ", brand=" + brand.getNameZh() + ", "
-				+ brand.getNameEn() + "]";
+		return "Goods [id=" + id + ", nameZH=" + nameZH + ", nameEN=" + nameEN
+				+ ", price=" + priceString + ", discountPrice=" + discountPrice
+				+ ", category=" + category.getNameZh() + ", " + category.getNameEn() + ", brand=" + brand.getNameZh()
+				+ ", " + brand.getNameEn() + "]";
 	}
 }
 
@@ -159,22 +183,22 @@ public class Goods {
  * @author CKM
  * 
  */
-class ShopPrice {
+class Price {
 
-	private String shopId;
+	private String shopName;
 	private float price;
 
-	public ShopPrice(String shopName, float price) {
+	public Price(String shopName, float price) {
 		super();
-		this.shopId = shopName;
+		this.shopName = shopName;
 		this.price = price;
 	}
 
 	/**
 	 * @return the shopName
 	 */
-	public String getShopId() {
-		return shopId;
+	public String getShopName() {
+		return shopName;
 	}
 
 	/**
@@ -182,7 +206,7 @@ class ShopPrice {
 	 *            the shopName to set
 	 */
 	public void setShopName(String shopName) {
-		this.shopId = shopName;
+		this.shopName = shopName;
 	}
 
 	/**
@@ -199,7 +223,7 @@ class ShopPrice {
 	 */
 	@Override
 	public String toString() {
-		return "[shopId=" + shopId + ", price=" + price + "]";
+		return "[shopName=" + shopName + ", price=" + price + "]";
 	}
 
 	/**
