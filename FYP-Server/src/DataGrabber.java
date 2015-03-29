@@ -86,7 +86,7 @@ public class DataGrabber {
 
 	public void siteURL(String urlStrZH, String urlStrEN) throws IOException {
 		// Connection timeout in millisecond
-		final int timeOut = 30000;
+		final int timeOut = 300000;
 
 		// Get Chinese version HTML source
 		URL urlZH = new URL(urlStrZH);
@@ -97,10 +97,7 @@ public class DataGrabber {
 		URL urlEN = new URL(urlStrEN);
 		Document htmlSourceEN = Jsoup.parse(urlEN, timeOut);
 		Element tableEN = htmlSourceEN.select("table").get(GoodsDataTableIndex);
-
-		// Extract goods data
-//		this.extractGoods(tableZH, tableEN);
-
+		
 		// Insert Goods data
 //		this.insertGoodsData(tableZH, tableEN, isInsertGoods);
 
@@ -109,8 +106,6 @@ public class DataGrabber {
 
 		// Insert categories data
 //		this.insertCategries(tableZH, tableEN, isInsertCategories);
-
-//		this.insertPrice(isInsertPrice);
 		
 		this.insertPrice(isInsertPrice);
 
@@ -188,7 +183,7 @@ public class DataGrabber {
 						.getInstance()
 						.getJDBCHelper()
 						.queryForInt(
-								"SELECT brand_id FROM brands WHERE brands.name_en = ?",
+								"SELECT id FROM brands WHERE brands.name_en = ?",
 								brandName);
 
 				String categoryName = good.getCategory().getNameEn() != null ? good
@@ -200,7 +195,7 @@ public class DataGrabber {
 						.getInstance()
 						.getJDBCHelper()
 						.queryForInt(
-								"SELECT category_id FROM categories WHERE categories.name_en = ?",
+								"SELECT id FROM categories WHERE categories.name_en = ?",
 								categoryName);
 
 				// Inert into goods JDBCHelper .getInstance()
@@ -210,11 +205,9 @@ public class DataGrabber {
 						.execute(
 								"INSERT INTO "
 										+ TableGoods
-										+ " (barcode, name_zh, name_en, brand_id, category_id) VALUES (?, ?, ?, ?, ?)",
-								good.getBarcode(), good.getNameZH(),
-								good.getNameEN(), brandId, categoryId);
+										+ " (consumer_id, name_zh, name_en, brand_id, category_id) VALUES (?, ?, ?, ?, ?)",
+								good.getConsumerId(), good.getNameZH(), good.getNameEN(), brandId, categoryId);
 
-				insertShopGoods(null, good);
 			}
 		}
 	}
@@ -231,12 +224,8 @@ public class DataGrabber {
 			List<String> consumerIds = JDBCHelper.getInstance().getJDBCHelper()
 					.queryForStringList("SELECT goods.consumer_id FROM goods");
 
-
-			Calendar cal = Calendar.getInstance();
-			cal.add(Calendar.DATE, -1);
-			Date yesterday = cal.getTime();
-
 			if (consumerIds != null && consumerIds.size() > 0) {
+				int totalCount = 0;
 				for (int i = 0; i < consumerIds.size(); i++) {
 					String consumerId = consumerIds.get(i);
 
@@ -258,101 +247,13 @@ public class DataGrabber {
 					Document htmlSourceEN = Jsoup.parse(urlEN, timeOut);
 					Element tableEN = htmlSourceEN.select("table").get(
 							PriceDataTableIndex);
-					System.out.println("i = " + i);
-					extractDiscountDetails(tableZH, consumerId, false);
+
+					extractPriceDetails(tableZH, consumerId, false);
 					
-					if (true)
-						continue;
-
-					Elements trs = tableZH.select("tr");
-					// Index 1 is the first table of shops
-					Elements shopTables = trs.get(PriceDataShopTablesIndex)
-							.select("table");
-
-					int shopId = 0;
-					// Extract shop tables
-					for (int j = 0; j < shopTables.size(); j++) {
-						Elements shopTableTrs = shopTables.get(j).select("tr");
-						shopId = j + 1;
-						// Extract "tr"s for shop table
-						for (int k = 1; k < shopTableTrs.size(); k++) {
-							Elements shopTableTds = shopTableTrs.get(k).select(
-									"td");
-							String priceDateString = shopTableTds.get(0).text();
-
-							// Only get the current date price
-							try {
-								SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-								Date priceDate = dateFormat.parse(priceDateString);
-
-								// If the price date is before today, do not process the price 
-								int result = priceDate.compareTo(yesterday);
-								if (result <= 0) {
-									continue;
-								}
-							} catch (Exception e) {
-								continue;
-							}
-							
-							String price = shopTableTds.get(1).text();
-							if (price.equalsIgnoreCase("--")) {
-								continue;
-							} else {
-								price = priceOnlyDigit(price);
-							}
-							
-							String discountDetailsZH = "";
-							String discountDetailsEN = "";
-							if (!shopTableTds.select("remark").isEmpty()) {
-								Elements remarks = shopTableTds
-										.select("remark");
-								discountDetailsZH = remarks.first().text();
-
-								// Extract discount details for english version
-
-							}
-
-							int goodId = JDBCHelper
-									.getInstance()
-									.getJDBCHelper()
-									.queryForInt(
-											"SELECT good_id FROM goods WHERE goods.consumer_id = ?",
-											consumerId);
-
-							String shopName = shopNameFromShopId(shopId);
-							if (shopName != null) {
-
-								// Inert into goods JDBCHelper .getInstance()
-								int result = JDBCHelper
-										.getInstance()
-										.getJDBCHelper()
-										.execute(
-												"INSERT INTO "
-														+ TableShopGoods
-														+ " (shop_id, good_id, price, discount_details_zh, discount_details_en) VALUES (?, ?, ?, ?, ?)",
-												shopId, goodId, price,
-												discountDetailsZH,
-												discountDetailsEN);
-								
-								String goodName = JDBCHelper
-										.getInstance()
-										.getJDBCHelper()
-										.queryForString(
-												"SELECT name_zh FROM goods WHERE goods.good_id = ?",
-												goodId);
-
-								System.out.println(result + "\n"
-										+ Integer.toString(shopId) + " : "
-										+ shopName + "\n" + goodId + " : "
-										+ goodName + "\n" + priceDateString
-										+ "\n" + price + "\n"
-										+ discountDetailsZH + "\n"
-										+ discountDetailsEN);
-
-							}
-						}
-					}
+					totalCount++;
+					System.out.println("Index : " + totalCount);
 				}
+				System.out.println("Total goods : " + totalCount);
 			}
 		}
 	}
@@ -376,7 +277,7 @@ public class DataGrabber {
 		return priceOnlyDigit;
 	}
 	
-	private void extractDiscountDetails(Element table, String consumerId, Boolean isEn) {
+	private void extractPriceDetails(Element table, String consumerId, Boolean isEn) {
 
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.DATE, -1);
@@ -419,55 +320,50 @@ public class DataGrabber {
 					price = priceOnlyDigit(price);
 				}
 
+				// If there is "remark" there is discount price
+				String discountDetails = null;
 				if (!shopTableTds.select("remark").isEmpty()) {
-					String discountDetails = "";
 					Elements remarks = shopTableTds.select("remark");
 					discountDetails = remarks.first().text();
 
-					int goodId = JDBCHelper
-							.getInstance()
-							.getJDBCHelper()
-							.queryForInt(
-									"SELECT good_id FROM goods WHERE goods.consumer_id = ?",
-									consumerId);
-					
-					String goodName = JDBCHelper
-							.getInstance()
-							.getJDBCHelper()
-							.queryForString(
-									"SELECT name_zh FROM goods WHERE goods.good_id = ?",
-									goodId);
-
-					String shopName = shopNameFromShopId(shopId);
-					
-					System.out.println("Consumer Id: " + consumerId + "\n"
-							+ "Shop Id: " + shopId + "\n" +
-							"Shop: " + shopName + "\n" + 
-							"Good: " + goodName + "\n" +
-							"Price: " + price
-							+ "\n" + "Discount: " + discountDetails);
-					
-					if (shopName == null) {
-						
-						String sql = null;
-						if (isEn) {
-							sql = "INSERT INTO " + TableShopGoods + "(shop_id, good_id, price, discount_details_en) VALUES (?, ?, ?, ?)";
-						} else {
-							sql = "INSERT INTO " + TableShopGoods + "(shop_id, good_id, price, discount_details_zh) VALUES (?, ?, ?, ?)";
-						}
-						
-						
-						// Inert into goods JDBCHelper .getInstance()
-//						int result = JDBCHelper
-//								.getInstance()
-//								.getJDBCHelper()
-//								.execute(
-//										"INSERT INTO "
-//												+ TableShopGoods
-//												+ " (shop_id, good_id, price, discount_details_zh, discount_details_en) VALUES (?, ?, ?, ?, ?)",
-//										shopId, goodId, price, discountDetails);
-					}
 				}
+				
+				int goodId = JDBCHelper
+						.getInstance()
+						.getJDBCHelper()
+						.queryForInt(
+								"SELECT id FROM goods WHERE goods.consumer_id = ?",
+								consumerId);
+
+				String goodName = JDBCHelper
+						.getInstance()
+						.getJDBCHelper()
+						.queryForString(
+								"SELECT name_zh FROM goods WHERE goods.id = ?",
+								goodId);
+
+				String shopName = shopNameFromShopId(shopId);
+
+				String sql = null;
+				if (isEn) {
+					sql = "INSERT INTO "
+							+ TableShopGoods
+							+ "(shop_id, good_id, price, discount_details_en) VALUES (?, ?, ?, ?)";
+				} else {
+					sql = "INSERT INTO "
+							+ TableShopGoods
+							+ "(shop_id, good_id, price, discount_details_zh) VALUES (?, ?, ?, ?)";
+				}
+
+				// Inert into goods JDBCHelper .getInstance()
+				int result = JDBCHelper.getInstance().getJDBCHelper()
+						.execute(sql, shopId, goodId, price, discountDetails);
+
+				System.out.println("Result :" + result + "\n" + "Consumer Id: "
+						+ consumerId + "\n" + "Shop Id: " + shopId + "\n"
+						+ "Shop: " + shopName + "\n" + "Good: " + goodName
+						+ "\n" + "Price: " + price + "\n" + "Discount: "
+						+ discountDetails);
 			}
 		}
 	}
@@ -486,15 +382,6 @@ public class DataGrabber {
 			}
 		}
 		return null;
-	}
-
-	private void insertShopGoods(String shopName, Goods good) {
-		int goodId = JDBCHelper
-				.getInstance()
-				.getJDBCHelper()
-				.queryForInt(
-						"SELECT good_id FROM goods WHERE goods.consumer_id = ?",
-						good.getConsumerId());
 	}
 
 	private List<Goods> extractGoods(Element tableZH, Element tableEN) {
@@ -546,7 +433,7 @@ public class DataGrabber {
 					.attributes().get("value");
 
 			if (goods.size() >= i) {
-				String goodsIdString = goods.get(i - 1).getBarcode();
+				String goodsIdString = goods.get(i - 1).getConsumerId();
 				if (goodIdString.equalsIgnoreCase(goodsIdString)) {
 					// Set English name into goods
 					goods.get(i - 1).setNameEN(cols.get(NameIndex).text());
