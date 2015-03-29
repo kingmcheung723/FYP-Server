@@ -34,7 +34,7 @@ public class JDBCHelper extends JdbcHelper {
 		if (instance == null) {
 			DataSource dataSource = new SimpleDataSource(
 					"com.mysql.jdbc.Driver",
-					"jdbc:mysql://localhost:3306/fyp_db?useUnicode=yes&characterEncoding=UTF-8",
+					"jdbc:mysql://localhost:3306/fyp_database?useUnicode=yes&characterEncoding=UTF-8",
 					"root", null);
 			instance = new JDBCHelper(dataSource);
 		}
@@ -91,6 +91,7 @@ public class JDBCHelper extends JdbcHelper {
 		} catch (SQLException e) {
 			// throw new JdbcException("Error executing query:\n" + sql +
 			// "\n\nError: " + e.getMessage(), e);
+			System.out.println(e.toString());
 			return -1;
 		} finally {
 			JdbcUtil.close(stmt);
