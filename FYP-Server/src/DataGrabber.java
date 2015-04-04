@@ -1,6 +1,10 @@
 package src;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -15,6 +19,10 @@ import javax.swing.text.TabExpander;
 
 import jdbchelper.JdbcHelper;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -35,7 +43,7 @@ public class DataGrabber {
 
 	/** Index for goods table */
 	private final static int GoodsDataTableIndex = 9;
-	
+
 	/** Index for price table */
 	private final static int PriceDataTableIndex = 8;
 	private final static int PriceDataShopTablesIndex = 1;
@@ -46,6 +54,7 @@ public class DataGrabber {
 	public final static String TableGoods = "goods";
 	public final static String TableShopGoods = "shop_goods";
 	public final static String TablePrices = "prices";
+	public final static String TableShopLocations = "locations";
 
 	/** Shop Id */
 	private final static String WellcomeIdString = "1";
@@ -97,17 +106,21 @@ public class DataGrabber {
 		URL urlEN = new URL(urlStrEN);
 		Document htmlSourceEN = Jsoup.parse(urlEN, timeOut);
 		Element tableEN = htmlSourceEN.select("table").get(GoodsDataTableIndex);
-		
+
 		// Insert Goods data
-//		this.insertGoodsData(tableZH, tableEN, isInsertGoods);
+		// this.insertGoodsData(tableZH, tableEN, isInsertGoods);
 
 		// Insert brands data
-//		this.insertBrands(tableZH, tableEN, isInsertBrands);
+		// this.insertBrands(tableZH, tableEN, isInsertBrands);
 
 		// Insert categories data
-//		this.insertCategries(tableZH, tableEN, isInsertCategories);
+		// this.insertCategries(tableZH, tableEN, isInsertCategories);
+
+		// this.insertPrice(isInsertPrice);
+
+//		this.insertLocation();
 		
-		this.insertPrice(isInsertPrice);
+		this.insertShopLocation();
 
 	}
 
@@ -206,7 +219,8 @@ public class DataGrabber {
 								"INSERT INTO "
 										+ TableGoods
 										+ " (consumer_id, name_zh, name_en, brand_id, category_id) VALUES (?, ?, ?, ?, ?)",
-								good.getConsumerId(), good.getNameZH(), good.getNameEN(), brandId, categoryId);
+								good.getConsumerId(), good.getNameZH(),
+								good.getNameEN(), brandId, categoryId);
 
 			}
 		}
@@ -236,7 +250,8 @@ public class DataGrabber {
 							+ consumerId);
 					Document htmlSourceZH = Jsoup.parse(urlZH, timeOut);
 					Elements tables = htmlSourceZH.select("table");
-					if (tables.size() == 0 || tables.size() < PriceDataTableIndex) {
+					if (tables.size() == 0
+							|| tables.size() < PriceDataTableIndex) {
 						continue;
 					}
 					Element tableZH = tables.get(PriceDataTableIndex);
@@ -249,7 +264,7 @@ public class DataGrabber {
 							PriceDataTableIndex);
 
 					extractPriceDetails(tableZH, consumerId, false);
-					
+
 					totalCount++;
 					System.out.println("Index : " + totalCount);
 				}
@@ -257,18 +272,18 @@ public class DataGrabber {
 			}
 		}
 	}
-	
+
 	private String priceOnlyDigit(String price) {
 		// Extract only the digits from the price string
 		String priceOnlyDigit = "";
 		for (int z = 0; z < price.length(); z++) {
 
 			// Check isn't a chinese
-	        int codepoint = price.codePointAt(z);
-	        if (Character.UnicodeScript.of(codepoint) == Character.UnicodeScript.HAN) {
-	            break;
-	        }
-			
+			int codepoint = price.codePointAt(z);
+			if (Character.UnicodeScript.of(codepoint) == Character.UnicodeScript.HAN) {
+				break;
+			}
+
 			char c = price.charAt(z);
 			if ((c >= 48 && c <= 57) || (c == '.')) {
 				priceOnlyDigit += c;
@@ -276,8 +291,9 @@ public class DataGrabber {
 		}
 		return priceOnlyDigit;
 	}
-	
-	private void extractPriceDetails(Element table, String consumerId, Boolean isEn) {
+
+	private void extractPriceDetails(Element table, String consumerId,
+			Boolean isEn) {
 
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.DATE, -1);
@@ -312,7 +328,7 @@ public class DataGrabber {
 				} catch (Exception e) {
 					continue;
 				}
-				
+
 				String price = shopTableTds.get(1).text();
 				if (price.equalsIgnoreCase("--")) {
 					continue;
@@ -327,7 +343,7 @@ public class DataGrabber {
 					discountDetails = remarks.first().text();
 
 				}
-				
+
 				int goodId = JDBCHelper
 						.getInstance()
 						.getJDBCHelper()
@@ -446,6 +462,73 @@ public class DataGrabber {
 
 		return this.goods;
 	}
+	
+	private void insertShopLocation() {
+
+		String csvFile = "location-aeontemp.csv";
+		BufferedReader br = null;
+		String line = "";
+		final String cvsSplitBy = ",";
+		int count = 0;
+	 
+		try {
+			
+			br = new BufferedReader(new FileReader(csvFile));
+			while ((line = br.readLine()) != null) {
+				// use comma as separator
+				String[] country = line.split(cvsSplitBy);
+
+				String companyName = country[0].trim();
+				String district = country[1].trim();
+				String shopName = country[2].trim();
+				String location = country[3].trim();
+				String workingHours = country[4].trim();
+				String phone = country[5].trim();
+				String latitude = country[6].trim();
+				String longitude = country[7].trim();
+				String region = country[8].trim();
+
+				String shopIdSQL = "SELECT id FROM shops WHERE name_en = ? OR name_zh = ?";
+				String shopId = JDBCHelper.getInstance().getJDBCHelper()
+						.queryForString(shopIdSQL, companyName, companyName);
+
+				String insetLocationSQL = "INSERT INTO locations(shop_id, shop_name_zh, shop_name_en, latitude, longitude, "
+						+ "location_en, location_zh, working_hours_zh, working_hours_en, phone, region_zh, region_en, "
+						+ "district_en, district_zh) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+				// Inert into goods JDBCHelper .getInstance()
+				int result = JDBCHelper
+						.getInstance()
+						.getJDBCHelper()
+						.execute(insetLocationSQL, shopId, shopName, "",
+								latitude, longitude, "", location,
+								workingHours, "", phone, region, "", "",
+								district);
+
+				System.out.print(Integer.toString(count) + ": ");
+				System.out.print(shopId + companyName + "," + district + ","
+						+ shopName + "," + location + "," + workingHours + ","
+						+ phone + "," + latitude + "," + longitude + ","
+						+ region);
+				System.out.println();
+				count++;
+
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 
 	private boolean isChinese(String str) {
 		boolean isChinese = false;
@@ -479,7 +562,7 @@ public class DataGrabber {
 
 	private String shopNameFromShopId(int shopId) {
 		String shopName = null;
-		
+
 		switch (shopId) {
 		case WellcomeId:
 			shopName = Wellcome;
