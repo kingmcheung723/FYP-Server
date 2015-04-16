@@ -84,7 +84,7 @@ public class DataGrabber {
 
 	public void siteURL(String urlStrZH, String urlStrEN) throws IOException {
 		// Connection timeout in millisecond
-		final int timeOut = 300000;
+		final int timeOut = 3000000;
 
 		// Get Chinese version HTML source
 		URL urlZH = new URL(urlStrZH);
@@ -105,7 +105,7 @@ public class DataGrabber {
 		// Insert categories data
 		// this.insertCategries(tableZH, tableEN, isInsertCategories);
 
-		// this.insertPrice(isInsertPrice);
+		 this.insertPrice(isInsertPrice);
 
 		// this.insertShopLocation();
 
@@ -230,7 +230,7 @@ public class DataGrabber {
 				for (int i = 0; i < consumerIds.size(); i++) {
 					String consumerId = consumerIds.get(i);
 
-					final int timeOut = 3000;
+					final int timeOut = 10000;
 
 					// Get Chinese version HTML source
 					URL urlZH = new URL(ConsumerPriceWebPageChineseURL
